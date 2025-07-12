@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hospital & Appointment Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .section { margin-bottom: 30px; }
+    label { display: block; margin-top: 10px; }
+    input, select { padding: 6px; width: 250px; }
+    button { margin-top: 15px; padding: 8px 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Hospital & Appointment Management System</h1>
+
+  <div class="section" id="registerHospital">
+    <h2>Register Hospital</h2>
+    <label>Hospital Name: <input id="hospitalName"></label>
+    <label>Location: <input id="hospitalLocation"></label>
+    <button onclick="registerHospital()">Register</button>
+  </div>
+
+  <div class="section" id="registerDoctor">
+    <h2>Register Doctor</h2>
+    <label>Name: <input id="doctorName"></label>
+    <label>Qualifications: <input id="qualifications"></label>
+    <label>Specializations (comma separated): <input id="specializations"></label>
+    <label>Experience (years): <input id="experience" type="number"></label>
+    <button onclick="registerDoctor()">Register</button>
+  </div>
+
+  <div class="section" id="registerPatient">
+    <h2>Register Patient</h2>
+    <label>Name: <input id="patientName"></label>
+    <label>Gender: <select id="patientGender"><option>Male</option><option>Female</option><option>Other</option></select></label>
+    <label>Date of Birth: <input id="patientDOB" type="date"></label>
+    <label>Unique ID: <input id="patientUID"></label>
+    <button onclick="registerPatient()">Register</button>
+  </div>
+
+  <div class="section" id="appointments">
+    <h2>Book Appointment</h2>
+    <label>Patient UID: <input id="apptPatientUID"></label>
+    <label>Doctor Name: <input id="apptDoctorName"></label>
+    <label>Hospital Name: <input id="apptHospitalName"></label>
+    <label>Date/Time: <input id="apptTime" type="datetime-local"></label>
+    <label>Consultation Fee: <input id="apptFee" type="number"></label>
+    <button onclick="bookAppointment()">Book</button>
+  </div>
+
+  <div class="section">
+    <h2>Appointments</h2>
+    <table id="apptTable">
+      <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Hospital</th>
+        <th>Date/Time</th>
+        <th>Fee</th>
+    </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Hospital Dashboard</h2>
+    <label>Enter Hospital Name: <input id="dashHospitalName"></label>
+    <button onclick="showHospitalDashboard()">Show Dashboard</button>
+    <div id="hospitalDashboard"></div>
+  </div>
+
+  <div class="section">
+    <h2>Doctor Dashboard</h2>
+    <label>Enter Doctor Name: <input id="dashDoctorName"></label>
+    <button onclick="showDoctorDashboard()">Show Dashboard</button>
+    <div id="doctorDashboard"></div>
+  </div>
+
+  <div class="section">
+    <h2>Patient History</h2>
+    <label>Enter Patient UID: <input id="dashPatientUID"></label>
+    <button onclick="showPatientHistory()">Show History</button>
+    <div id="patientHistory"></div>
+  </div>
+
+  <script>
+    const hospitals = [];
+    const doctors = [];
+    const patients = [];
+    const appointments = [];
+
+    function registerHospital() {
+      const name = document.getElementById('hospitalName').value;
+      const location = document.getElementById('hospitalLocation').value;
+      hospitals.push({ name, location });
+      alert("Hospital registered successfully.");
+    }
+
+    function registerDoctor() {
+      const name = document.getElementById('doctorName').value;
+      const qualifications = document.getElementById('qualifications').value;
+      const specializations = document.getElementById('specializations').value.split(',');
+      const experience = document.getElementById('experience').value;
+      doctors.push({ name, qualifications, specializations, experience });
+      alert("Doctor registered successfully.");
+    }
+
+    function registerPatient() {
+      const name = document.getElementById('patientName').value;
+      const gender = document.getElementById('patientGender').value;
+      const dob = document.getElementById('patientDOB').value;
+      const uid = document.getElementById('patientUID').value;
+      patients.push({ name, gender, dob, uid });
+      alert("Patient registered successfully.");
+    }
+
+    function bookAppointment() {
+      const patientUID = document.getElementById('apptPatientUID').value;
+      const doctorName = document.getElementById('apptDoctorName').value;
+      const hospitalName = document.getElementById('apptHospitalName').value;
+      const time = document.getElementById('apptTime').value;
+      const fee = parseFloat(document.getElementById('apptFee').value);
+
+      const patient = patients.find(p => p.uid === patientUID);
+      const doctor = doctors.find(d => d.name === doctorName);
+      const hospital = hospitals.find(h => h.name === hospitalName);
+
+      if (!patient || !doctor || !hospital) {
+        alert("Invalid details. Check if patient, doctor, and hospital are registered.");
+        return;
+      }
+
+      appointments.push({ patient: patient.name, doctor: doctor.name, hospital: hospital.name, time, fee });
+      const row = `<tr>
+        <td>${patient.name}</td>
+        <td>${doctor.name}</td>
+        <td>${hospital.name}</td>
+        <td>${time}</td>
+        <td>${fee}</td>
+        </tr>`;
+      document.getElementById('apptTable').innerHTML += row;
+      alert("Appointment booked successfully.");
+    }
+
+    function showHospitalDashboard() {
+      const name = document.getElementById('dashHospitalName').value;
+      const hospital = hospitals.find(h => h.name === name);
+      if (!hospital) return alert("Hospital not found");
+
+      const hospitalAppointments = appointments.filter(a => a.hospital === name);
+      const totalConsultations = hospitalAppointments.length;
+      const totalRevenue = hospitalAppointments.reduce((sum, a) => sum + a.fee * 0.4, 0);
+
+      const doctorRevenue = {};
+      hospitalAppointments.forEach(a => {
+        doctorRevenue[a.doctor] = (doctorRevenue[a.doctor] || 0) + a.fee * 0.4;
+      });
+
+      let output = `<p><strong>Total Consultations:</strong> ${totalConsultations}</p>`;
+      output += `<p><strong>Total Hospital Revenue:</strong> ₹${totalRevenue.toFixed(2)}</p>`;
+      output += `<h4>Revenue per Doctor:</h4><ul>`;
+      for (let doc in doctorRevenue) {
+        output += `<li>${doc}: ₹${doctorRevenue[doc].toFixed(2)}</li>`;
+      }
+      output += `</ul>`;
+      document.getElementById('hospitalDashboard').innerHTML = output;
+    }
+
+    function showDoctorDashboard() {
+      const name = document.getElementById('dashDoctorName').value;
+      const doctor = doctors.find(d => d.name === name);
+      if (!doctor) return alert("Doctor not found");
+
+      const docAppointments = appointments.filter(a => a.doctor === name);
+      const totalConsultations = docAppointments.length;
+      const totalEarnings = docAppointments.reduce((sum, a) => sum + a.fee * 0.6, 0);
+
+      const hospitalEarnings = {};
+      docAppointments.forEach(a => {
+        hospitalEarnings[a.hospital] = (hospitalEarnings[a.hospital] || 0) + a.fee * 0.6;
+      });
+
+      let output = `<p><strong>Total Consultations:</strong> ${totalConsultations}</p>`;
+      output += `<p><strong>Total Earnings:</strong> ₹${totalEarnings.toFixed(2)}</p>`;
+      output += `<h4>Earnings per Hospital:</h4><ul>`;
+      for (let h in hospitalEarnings) {
+        output += `<li>${h}: ₹${hospitalEarnings[h].toFixed(2)}</li>`;
+      }
+      output += `</ul>`;
+      document.getElementById('doctorDashboard').innerHTML = output;
+    }
+
+    function showPatientHistory() {
+      const uid = document.getElementById('dashPatientUID').value;
+      const patient = patients.find(p => p.uid === uid);
+      if (!patient) return alert("Patient not found");
+
+      const history = appointments.filter(a => a.patient === patient.name);
+      if (!history.length) {
+        document.getElementById('patientHistory').innerHTML = '<p>No appointments found.</p>';
+        return;
+      }
+      let output = `<table>
+        <tr>
+            <th>Doctor</th>
+            <th>Hospital</th>
+            <th>Date/Time</th>
+            <th>Fee</th>
+       </tr>`;
+      history.forEach(a => {
+        output += `<tr>
+            <td>${a.doctor}</td>
+            <td>${a.hospital}</td>
+            <td>${a.time}</td>
+            <td>₹${a.fee}</td>
+        </tr>`;
+      });
+      output += `</table>`;
+      document.getElementById('patientHistory').innerHTML = output;
+       
+
+      
+
+    }
+  </script>
+</body>
+</html>
